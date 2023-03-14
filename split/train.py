@@ -33,10 +33,12 @@ def train(opt, net):
         val_labels = json.load(f)
     val_img_dir = opt.val_img_dir
 
-    train_set = ImageDataset(dir_img, labels, opt.featureW, scale=opt.scale)
+    device = torch.device("cuda") if opt.gpu else torch.device("cpu")
+
+    train_set = ImageDataset(dir_img, labels, opt.featureW, scale=opt.scale, device=device)
     train_loader = DataLoader(train_set, batch_size=opt.batch_size, shuffle=True)
 
-    val_set = ImageDataset(val_img_dir, val_labels, opt.featureW, scale=opt.scale)
+    val_set = ImageDataset(val_img_dir, val_labels, opt.featureW, scale=opt.scale, device=device)
     val_loader = DataLoader(val_set, batch_size=opt.batch_size, shuffle=False)
 
     print('Data loaded!')

@@ -15,7 +15,7 @@ class ImageDataset(Dataset):
     """Image Dataset"""
 
     def __init__(self, img_dir, labels_dict, output_width, scale=0.5,
-                 min_width=40, mode='split', suffix='.jpg'):
+                 min_width=40, mode='split', suffix='.jpg', device=torch.device):
         """
         Initialization of the dataset
 
@@ -40,6 +40,7 @@ class ImageDataset(Dataset):
         self.min_width = min_width
         self.mode = mode
         self.suffix = suffix
+        self.device = device
 
     def __len__(self):
         return self.nSamples
@@ -70,10 +71,10 @@ class ImageDataset(Dataset):
             h_matrix = labels['h_matrix']
             v_matrix = labels['v_matrix']
 
-            img_tensor = torch.from_numpy(img_array).type(torch.FloatTensor)
-            row_label = torch.from_numpy(np.array(h_matrix)).type(torch.FloatTensor)
+            img_tensor = torch.from_numpy(img_array).type(torch.FloatTensor).to(self.device)
+            row_label = torch.from_numpy(np.array(h_matrix)).type(torch.FloatTensor).to(self.device)
             column_label = torch.from_numpy(np.array(v_matrix)).type(
-                torch.FloatTensor)
+                torch.FloatTensor).to(self.device)
 
             return img_tensor, (row_label, column_label), (rows, columns)
         else:
@@ -97,8 +98,8 @@ class ImageDataset(Dataset):
             row_label = row_label[:, 0]
             column_label = column_label[0, :]
 
-            img_tensor = torch.from_numpy(img_array).type(torch.FloatTensor)
-            row_label = torch.from_numpy(row_label).type(torch.FloatTensor)
-            column_label = torch.from_numpy(column_label).type(torch.FloatTensor)
+            img_tensor = torch.from_numpy(img_array).type(torch.FloatTensor).to(self.device)
+            row_label = torch.from_numpy(row_label).type(torch.FloatTensor).to(self.device)
+            column_label = torch.from_numpy(column_label).type(torch.FloatTensor).to(self.device)
 
             return img_tensor, (row_label, column_label)
