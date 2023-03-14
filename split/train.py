@@ -47,41 +47,46 @@ def train(opt, net):
                            weight_decay=0.001)
     best_accuracy = 0
     for epoch in tqdm(range(opt.epochs)):
-        print('epoch:{}'.format(epoch + 1))
-        net.train()
-        epoch_loss = 0
-        correct_count = 0
-        count = 0
-        for i, b in tqdm(enumerate(train_loader)):
-            img, label = b
-            if opt.gpu:
-                img = img.cuda()
-                label = [x.cuda() for x in label]
-            pred_label = net(img)
-            loss = loss_func(pred_label, label, [0.1, 0.25, 1])
-            epoch_loss += loss
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            times = 1
-            correct_count += (torch.sum(
-                (pred_label[0] > 0.5).type(torch.IntTensor) == label[0][0].repeat(times,
-                                                                                  1).type(
-                    torch.IntTensor)).item() + torch.sum(
-                (pred_label[1] > 0.5).type(torch.IntTensor) == label[1][0].repeat(times,
-                                                                                  1).type(
-                    torch.IntTensor)).item())
-            count += label[0].view(-1).size()[0] * times + label[1].view(-1).size()[
-                0] * times
-        accuracy = correct_count / (count)
-        print(
-            'Epoch finished ! Loss: {0} , Accuracy: {1}'.format(epoch_loss / (i + 1),
-                                                                accuracy))
-        val_loss, val_acc = test(opt, net, val_loader)
-        if val_acc > best_accuracy:
-            best_accuracy = val_acc
+        try:
+            print('epoch:{}'.format(epoch + 1))
+            net.train()
+            epoch_loss = 0
+            correct_count = 0
+            count = 0
+            for i, b in tqdm(enumerate(train_loader)):
+                img, label = b
+                if opt.gpu:
+                    img = img.cuda()
+                    label = [x.cuda() for x in label]
+                pred_label = net(img)
+                loss = loss_func(pred_label, label, [0.1, 0.25, 1])
+                epoch_loss += loss
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                times = 1
+                correct_count += (torch.sum(
+                    (pred_label[0] > 0.5).type(torch.IntTensor) == label[0][0].repeat(times,
+                                                                                      1).type(
+                        torch.IntTensor)).item() + torch.sum(
+                    (pred_label[1] > 0.5).type(torch.IntTensor) == label[1][0].repeat(times,
+                                                                                      1).type(
+                        torch.IntTensor)).item())
+                count += label[0].view(-1).size()[0] * times + label[1].view(-1).size()[
+                    0] * times
+            accuracy = correct_count / (count)
+            print(
+                'Epoch finished ! Loss: {0} , Accuracy: {1}'.format(epoch_loss / (i + 1),
+                                                                    accuracy))
+            val_loss, val_acc = test(opt, net, val_loader)
+            if val_acc > best_accuracy:
+                best_accuracy = val_acc
+                torch.save(net.state_dict(),
+                           opt.saved_dir + 'model_epoch{}.pth'.format(epoch + 1))
+        except KeyboardInterrupt:
+            print('Exiting gracefully...')
             torch.save(net.state_dict(),
-                       opt.saved_dir + 'CP{}.pth'.format(epoch + 1))
+                       opt.saved_dir + 'model_exit_in_epoch_{}.pth'.format(epoch + 1))
 
 
 if __name__ == '__main__':
