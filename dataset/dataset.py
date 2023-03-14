@@ -15,7 +15,7 @@ class ImageDataset(Dataset):
     """Image Dataset"""
 
     def __init__(self, img_dir, labels_dict, output_width, scale=0.5,
-                 min_width=40, mode='split', suffix='.jpg', device=torch.device):
+                 min_width=40, mode='split', suffix='.jpg', device: torch.device = torch.device("cpu")):
         """
         Initialization of the dataset
 
