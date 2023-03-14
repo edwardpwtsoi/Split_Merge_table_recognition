@@ -84,11 +84,12 @@ def train(opt, net):
             if val_acc > best_accuracy:
                 best_accuracy = val_acc
                 torch.save(net.state_dict(),
-                           opt.saved_dir + 'model_epoch{}.pth'.format(epoch + 1))
+                           os.path.join(opt.saved_dir + 'model_epoch{}.pth'.format(epoch + 1)))
         except KeyboardInterrupt:
             print('Exiting gracefully...')
             torch.save(net.state_dict(),
-                       opt.saved_dir + 'model_exit_in_epoch_{}.pth'.format(epoch + 1))
+                       os.path.join(opt.saved_dir + 'model_exit_in_epoch_{}.pth'.format(epoch + 1)))
+            exit()
 
 
 if __name__ == '__main__':
