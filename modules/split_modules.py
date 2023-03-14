@@ -107,7 +107,7 @@ class ProjectPooling(nn.Module):
       output: Output of Project pooling layer with the same shape with input tensor
     """
     b, c, h, w = x.size()
-    output_slice = torch.ones([b, c, h, w], dtype=torch.float32)
+    output_slice = torch.ones([b, c, h, w], dtype=torch.float32, device=x.device)
     if self.direction == 0:
       return torch.mean(x, 3).unsqueeze(3) * output_slice
     elif self.direction == 1:
