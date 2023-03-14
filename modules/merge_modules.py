@@ -111,14 +111,8 @@ class GridProjectPooling(nn.Module):
     """
     b, c, h, w = x.size()
     h_line, v_line = architecture
-    self.h_line = [torch.Tensor([0]).type(
-      torch.DoubleTensor).cuda()] + h_line + [
-                    torch.Tensor([1]).type(torch.DoubleTensor).cuda()]
-    self.v_line = [torch.Tensor([0]).type(
-      torch.DoubleTensor).cuda()] + v_line + [
-                    torch.Tensor([1]).type(torch.DoubleTensor).cuda()]
-    self.h_line = [(h * x).round().type(torch.IntTensor) for x in self.h_line]
-    self.v_line = [(w * x).round().type(torch.IntTensor) for x in self.v_line]
+    self.h_line = [0] + [int((h * x).round().item()) for x in h_line] + [h]
+    self.v_line = [0] + [int((w * x).round().item()) for x in v_line] + [w]
 
     rows = [self.h_line[i + 1] - self.h_line[i] for i in
             range(len(self.h_line) - 1)]
@@ -145,16 +139,16 @@ class GridProjectPooling(nn.Module):
     Old version Grid pooling
     v_blocks = []
     matrix = torch.from_numpy(np.ones([b, c, len(self.h_line) - 1, len(self.v_line) - 1])).type(
-        torch.FloatTensor).cuda()
+        torch.FloatTensor)
     for i in range(len(self.h_line) - 1):
         h_blocks = []
         for j in range(len(self.v_line) - 1):
             output_block = torch.from_numpy(
                 np.ones([b, c, self.h_line[i + 1] - self.h_line[i], self.v_line[j + 1] - self.v_line[j]])).type(
-                torch.FloatTensor).cuda()
+                torch.FloatTensor)
             mean = torch.mean(
                 torch.mean(x[:, :, self.h_line[i]:self.h_line[i + 1], self.v_line[j]:self.v_line[j + 1]], 2),
-                2).cuda()
+                2)
             matrix[:, :, i, j] = mean
             h_blocks.append(mean.unsqueeze(0).transpose(0, 2) * output_block)
         h_block = torch.cat(h_blocks, 3)

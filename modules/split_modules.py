@@ -20,16 +20,16 @@ class SplitModel(nn.Module):
     """
     super(SplitModel, self).__init__()
     self.sfcn = SFCN(input_channels)
-    self.rpn1 = ProjectionNet(18, 0, True, False, 0)
-    self.rpn2 = ProjectionNet(36, 0, True, False, 0)
+    self.rpn1 = ProjectionNet(18, 0, True, False, 0.0)
+    self.rpn2 = ProjectionNet(36, 0, True, False, 0.0)
     self.rpn3 = ProjectionNet(36, 0, False, True, 0.3)
-    self.rpn4 = ProjectionNet(37, 0, False, True, 0)
+    self.rpn4 = ProjectionNet(37, 0, False, True, 0.0)
     # self.rpn5 = ProjectionNet(37, 0, False, True, 0)
 
-    self.cpn1 = ProjectionNet(18, 1, True, False, 0)
-    self.cpn2 = ProjectionNet(36, 1, True, False, 0)
+    self.cpn1 = ProjectionNet(18, 1, True, False, 0.0)
+    self.cpn2 = ProjectionNet(36, 1, True, False, 0.0)
     self.cpn3 = ProjectionNet(36, 1, False, True, 0.3)
-    self.cpn4 = ProjectionNet(37, 1, False, True, 0)
+    self.cpn4 = ProjectionNet(37, 1, False, True, 0.0)
     # self.cpn5 = ProjectionNet(37, 1, False, True, 0)
 
     self._init_weights()
@@ -107,8 +107,7 @@ class ProjectPooling(nn.Module):
       output: Output of Project pooling layer with the same shape with input tensor
     """
     b, c, h, w = x.size()
-    output_slice = torch.from_numpy(np.ones([b, c, h, w])).type(
-      torch.FloatTensor).cuda()
+    output_slice = torch.ones([b, c, h, w], dtype=torch.float32)
     if self.direction == 0:
       return torch.mean(x, 3).unsqueeze(3) * output_slice
     elif self.direction == 1:
@@ -149,9 +148,10 @@ class ProjectionNet(nn.Module):
       output(torch.tensor): Output tensor of this module, the shape is same with
           input tensor
     """
-    conv_out = torch.cat(
-      [m(x) for m in [self.conv_branch1, self.conv_branch2, self.conv_branch3]],
-      1)
+    conv_out_1 = self.conv_branch1(x)
+    conv_out_2 = self.conv_branch2(x)
+    conv_out_3 = self.conv_branch3(x)
+    conv_out = torch.cat([conv_out_1, conv_out_2, conv_out_3], 1)
     output = self.project_module(conv_out)
     return output
 
