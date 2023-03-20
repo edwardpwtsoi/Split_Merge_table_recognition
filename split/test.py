@@ -9,6 +9,7 @@ import numpy as np
 import os
 import torch
 import torch.backends.cudnn as cudnn
+import torchmetrics
 
 from torch.utils.data import DataLoader
 from dataset.dataset import ImageDataset
@@ -16,7 +17,7 @@ from modules.split_modules import SplitModel
 from loss.loss import bce_loss
 
 
-def test(opt, net, data=None):
+def test(opt, net, data=None, device=None):
   """
   Test script for Split model
   Args:
@@ -39,12 +40,12 @@ def test(opt, net, data=None):
 
   loss_func = bce_loss
 
+  metric_col = torchmetrics.classification.BinaryF1Score().to(device)
+  metric_row = torchmetrics.classification.BinaryF1Score().to(device)
+
   for epoch in range(1):
     net.eval()
     epoch_loss = 0
-    correct_count = 0
-    count = 0
-    times = 1
     for i, b in enumerate(test_loader):
       with torch.no_grad():
         img, label = b
@@ -54,20 +55,17 @@ def test(opt, net, data=None):
         pred_label = net(img)
         loss = loss_func(pred_label, label, [0.1, 0.25, 1])
         epoch_loss += loss
-        correct_count += (torch.sum(
-          (pred_label[0] > 0.5).type(torch.IntTensor) == label[0][0].repeat(
-            times, 1).type(
-            torch.IntTensor)).item() + torch.sum(
-          (pred_label[1] > 0.5).type(torch.IntTensor) == label[1][0].repeat(
-            times, 1).type(
-            torch.IntTensor)).item())
-        count += label[0].view(-1).size()[0] * times + label[1].view(-1).size()[
-          0] * times
-    accuracy = correct_count / (count)
+        row_pred, column_pred = pred_label
+        row_label, column_label = label
+        metric_col(column_pred, column_label)
+        metric_row(row_pred, row_label)
+    acc_col = metric_col.compute()
+    acc_row = metric_row.compute()
     total_loss = epoch_loss / (i + 1)
-    print('Validation finished ! Loss: {0} , Accuracy: {1}'.format(
-      epoch_loss / (i + 1), accuracy))
-    return total_loss, accuracy
+    print('Validation finished ! Loss: {0} , Row F1 Score: {1}, Col F1 Score: {2}'.format(
+      epoch_loss / (i + 1), acc_row, acc_col)
+    )
+    return total_loss, acc_row, acc_col
 
 
 def model_select(opt, net):
