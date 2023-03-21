@@ -32,8 +32,8 @@ class ImageDataset(Dataset):
           mode(str): The model should be one of 'split' and 'merge'
         """
         self.labels_dict = labels_dict
-        self.ids = list(labels_dict.keys())
-        self.nSamples = len(self.ids)
+        self.image_names = list(labels_dict.keys())
+        self.nSamples = len(self.image_names)
         self.img_dir = img_dir
         self.output_width = output_width
         self.scale = scale
@@ -47,12 +47,12 @@ class ImageDataset(Dataset):
 
     def __getitem__(self, index):
         assert index <= len(self), 'index range error'
-        id = self.ids[index]
+        image_name = self.image_names[index]
         # TODO: find out how this is used
         if self.suffix == '.npy':
-            img = np.load(os.path.join(self.img_dir, id + self.suffix))
+            img = np.load(os.path.join(self.img_dir, image_name + self.suffix))
         elif self.suffix == '.jpg':
-            img = Image.open(os.path.join(self.img_dir, id)).convert("RGB")
+            img = Image.open(os.path.join(self.img_dir, image_name)).convert("RGB")
             img = np.array(img)
         h, w, c = img.shape
         new_h = int(self.scale * h) if int(
@@ -65,7 +65,7 @@ class ImageDataset(Dataset):
         img_array = np.array(img) / 255.
 
         if self.mode == 'merge':
-            labels = self.labels_dict[id]
+            labels = self.labels_dict[image_name]
             rows = labels['rows']
             columns = labels['columns']
             h_matrix = labels['h_matrix']
@@ -78,7 +78,7 @@ class ImageDataset(Dataset):
 
             return img_tensor, (row_label, column_label), (rows, columns)
         else:
-            labels = self.labels_dict[id]
+            labels = self.labels_dict[image_name]
             row_label = labels['rows']
             column_label = labels['columns']
 
