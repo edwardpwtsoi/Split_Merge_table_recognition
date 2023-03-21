@@ -52,8 +52,15 @@ class ImageDataset(Dataset):
         if self.suffix == '.npy':
             img = np.load(os.path.join(self.img_dir, image_name + self.suffix))
         elif self.suffix == '.jpg':
-            img = Image.open(os.path.join(self.img_dir, image_name)).convert("RGB")
-            img = np.array(img)
+            img = np.array(
+                Image.open(os.path.join(self.img_dir, image_name)).convert("RGB")
+            )
+            mask_h = np.array(
+                Image.open(os.path.join(self.img_dir, image_name.replace(".jpg", "_horizontal.jpg"))).convert("L")
+            )
+            mask_v = np.array(
+                Image.open(os.path.join(self.img_dir, image_name.replace(".jpg", "_vertical.jpg"))).convert("L")
+            )
         h, w, c = img.shape
         new_h = int(self.scale * h) if int(
             self.scale * h) > self.min_width else self.min_width
@@ -63,11 +70,13 @@ class ImageDataset(Dataset):
             [cv2.resize(img[:, :, i], (new_w, new_h), interpolation=cv2.INTER_AREA) for i in
              range(c)])
         img_array = np.array(img) / 255.
+        mask_h_1d = (mask_h[:, 0] / 255. > 0.5).astype(np.int).tolist()
+        mask_v_1d = (mask_v[0] / 255. > 0.5).astype(np.int).tolist()
 
         if self.mode == 'merge':
             labels = self.labels_dict[image_name]
-            rows = labels['rows']
-            columns = labels['columns']
+            rows = mask_h_1d
+            columns = mask_v_1d
             h_matrix = labels['h_matrix']
             v_matrix = labels['v_matrix']
 
@@ -78,9 +87,8 @@ class ImageDataset(Dataset):
 
             return img_tensor, (row_label, column_label), (rows, columns)
         else:
-            labels = self.labels_dict[image_name]
-            row_label = labels['rows']
-            column_label = labels['columns']
+            row_label = mask_h_1d
+            column_label = mask_v_1d
 
             # resize ground truth to proper size
             width = int(np.floor(new_w / self.output_width))
